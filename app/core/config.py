@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str = "Data Preprocessor Microservice"
-    API_V1_STR: str = "/api/v1"
+    API_STR: str = "/preprocessor/api"
     USE_MOCK_PREPROCESSOR: bool = True 
 
     # For loading from .env file

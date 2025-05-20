@@ -1,16 +1,16 @@
-# -----------------------------------------------------------------------------
-# Base Stage: Use an official Python runtime as a parent image
-# -----------------------------------------------------------------------------
 FROM python:3.13-slim-bookworm AS base
 
 # Set environment variables for Python
-ENV PYTHONDONTWRITEBYTECODE 1  # Prevents Python from writing .pyc files
-ENV PYTHONUNBUFFERED 1         # Force stdin, stdout, and stderr to be unbuffered
+
+# Prevents Python from writing .pyc files
+ENV PYTHONDONTWRITEBYTECODE=1  
+# Force stdin, stdout, and stderr to be unbuffered
+ENV PYTHONUNBUFFERED=1         
 
 # Set working directory
 WORKDIR /app
 
-# Use pip to bootstrap uv itself.
+# Install uv
 RUN pip install --no-cache-dir uv
 
 # Create a non-root user and group for security
@@ -30,7 +30,6 @@ RUN uv venv .venv && \
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy the rest of the application code
-# Ensure .dockerignore is properly set up to exclude unnecessary files
 COPY --chown=appuser:appgroup ./app ./app
 COPY --chown=appuser:appgroup ./app/data_mocks ./data_mocks
 
@@ -42,3 +41,5 @@ EXPOSE 8001
 
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Don't remember why it has to be hosted on 0.0.0.0 but it breaks if it's on
+# localhost so I just left it as is for now
