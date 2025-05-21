@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
-from app.schemas.data_models import PreprocessingInput
+from app.schemas.data_models import PreprocessingParameters
 import io
 
 router = APIRouter()
@@ -8,12 +8,43 @@ router = APIRouter()
 
 # Add `response_model` if returning structured JSON
 @router.post("/preprocess")
-async def preprocess_data(input_data: PreprocessingInput):
+async def preprocess_data(
+    params: PreprocessingParameters, 
+    hdrFile: UploadFile = File(...), 
+    cubeFile: UploadFile = File(...)
+):
     """
-    Real endpoint: Implement your actual data preprocessing logic here.
-    This might involve fetching data based on input_data, processing it,
-    and then returning it, perhaps as a CSV stream or JSON.
+    The main function hosting the logic to the actual preprocessing endpoint.
+    Takes in a header file and a binary of a data cube and processes it, 
+    by extracting data from each pixel for each wavelengt band using
+    - Statistical Features
+    - Average Spectrum
+    - Spectral Derivatives (Savitzky-Golay)
+    - Continuum Removal
+    - FFT Features
+    Returns the preprocessing results as a csv file or saves them
+    to the running instance of the storage microservice
+
+    Parameters
+    ----------
+    params: PreprocessingParameters
+        Configuration for customizing the output
+    hdrFile: UploadFile
+        Header file of the data cube to be processed
+    cubeFile: UploadFile
+        The actual binary data of the data cube to be processed
     """
+    # Basic file validation
+    if not hdrFile.filename.endswith(".hdr"): 
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid data cube header file type. Only .hdr extensions are supported."
+        )
+    if not cubeFile.filename.endswith(".raw") or cubeFile.filename.endswith(".bin"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid data cube file type. Only .raw and .bin extensions are supported"
+        )
     # --- TODO: Implement your actual preprocessing logic ---
     # Apply cleaning, transformation, feature engineering
 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from app.core.config import settings
-from app.api import router_mock, router
+from app.core.config import settings, PreprocessorVersion
+from app.api import router, router_stub
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -8,23 +8,26 @@ app = FastAPI(
 )
 
 # Conditional Router Inclusion
-if settings.USE_MOCK_PREPROCESSOR:
-    print("INFO:     Loading MOCK Data Preprocessor Endpoints")
-    app.include_router(router_mock.router, prefix=settings.API_STR, tags=["Mock Preprocessor"])
+if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+    print("INFO: Loading Stub Data Preprocessor Endpoints")
+    app.include_router(router_stub.router, prefix=settings.API_STR, tags=["Stub Preprocessor"])
+elif settings.PREPROCESSOR_VERSION == PreprocessorVersion.MOCK:
+    print("INFO: Loading Mock Data Preprocessor Endpoints")
+    # app.include_router(router_mock.router, prefix=settings.API_STR, tags=["Mock Preprocessor"])
 else:
-    print("INFO:     Loading Data Preprocessor Endpoints")
-    app.include_router(router.router, prefix=settings.API_STR, tags=["Real Preprocessor"])
+    print("INFO: Loading Data Preprocessor Endpoints")
+    app.include_router(router.router, prefix=settings.API_STR, tags=["Production Preprocessor"])
 
 @app.get("/", tags=["Root"])
 async def read_root():
     return {
         "message": f"{settings.APP_NAME} is running",
-        "using_mock": settings.USE_MOCK_PREPROCESSOR
+        "version": settings.PREPROCESSOR_VERSION.name
     }
 
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {
         "status": "ok", 
-        "using_mock": settings.USE_MOCK_PREPROCESSOR
+        "version": settings.PREPROCESSOR_VERSION.name
     }

@@ -1,5 +1,40 @@
-from app.core.config import settings
+from app.core.config import settings, PreprocessorVersion
+from app.schemas.data_models import PreprocessingParameters
+import pytest
 
+# ====================
+# Creating Dummy Input
+# ====================
+@pytest.fixture
+def raw_file():
+    # Dummy raw file for testing
+    content = b'\x01\x02\x03\x04' * 100
+    return ("dummy.raw", content, "application/octet-stream")
+
+@pytest.fixture
+def bin_file():
+    # Dummy bin file for testing
+    content = b'\x05\x06\x07\x08' * 100
+    return ("dummy.bin", content, "application/octet-stream")
+
+@pytest.fixture
+def hdr_file():
+    # Dummy hdr file for testing
+    content = b'DIMENSIONS=10,10,1\nDATATYPE=uint8\n'
+    return ("dummy.hdr", content, "application/octet-stream")
+
+@pytest.fixture
+def params():
+    return PreprocessingParameters(
+        excludeMethods=None,
+        removeBackground=False,
+        convertWavelengths=False
+    )
+
+
+# ================
+# Test Definitions
+# ================
 def test_service_alive(client):
     """
     Test if the service was properly started
@@ -7,16 +42,81 @@ def test_service_alive(client):
     response = client.get("/")
     assert response.status_code == 200
 
-def test_preprocess_mock(client):
-    """
-    If running in the mock environment, check if the 
-    mock preprocessor correctly returns data when being called
-    its specific POST request
-    """
-    if settings.USE_MOCK_PREPROCESSOR:
-        response = client.post("/preprocessor/api/preprocess") 
+def test_upload_and_preprocess_bin_success(client, params, hdr_file, bin_file):
+    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+        _files = {
+            "hdr_file": hdr_file,
+            "cube_file": bin_file
+        }
+
+        _data = {
+            "params_json": params.model_dump_json()
+        }
+
+        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+
         assert response.status_code == 200
         assert "text/csv" in response.headers["content-type"]
-    else:
-        # Test for real preprocessor here
-        assert True
+
+def test_upload_and_preprocess_raw_success(client, params, hdr_file, raw_file):
+    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+        _files = {
+            "hdr_file": hdr_file,
+            "cube_file": raw_file
+        }
+
+        _data = {
+            "params_json": params.model_dump_json()
+        }
+
+        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+
+        assert response.status_code == 200
+        assert "text/csv" in response.headers["content-type"]
+
+# The api should process the request with default settings if
+# none are provided
+def test_no_input_success(client):
+    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+
+        response = client.post("/preprocessor/api/preprocess")
+        assert response.status_code == 200
+        assert "text/csv" in response.headers["content-type"]
+
+
+def test_missing_cube_file_failure(client, params, hdr_file):
+    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+        _files = {
+            "hdr_file": hdr_file
+        }
+
+        _data = {
+            "params_json": params.model_dump_json()
+        }
+
+        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+        assert response.status_code == 400
+
+def test_missing_hdr_file_failure(client, params, bin_file, raw_file):
+    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
+        # Test with inputing only the binary file first
+        _files = {
+            "cube_file": bin_file
+        }
+
+        _data = {
+            "params_json": params.model_dump_json()
+        }
+
+        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+        assert response.status_code == 400
+
+        # Test with input only the raw file also
+        _files = {
+            "cube_file": raw_file
+        }
+
+        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+        assert response.status_code == 400
+
+
