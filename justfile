@@ -16,8 +16,10 @@ build-docker:
 
 # run the microservice docker container
 run-docker: build-docker
-  docker run --name preprocessor-service -p 8001:8001 preprocessor-service
+  docker run -p 8001:8001 preprocessor-service
 
 # run the microservice docker container in the background
 run-docker-detached: build-docker
-  docker run --name preprocessor-service -d -p 8001:8001 preprocessor-service
+  docker run -d -p 8001:8001 preprocessor-service
+
+# docker run --name preprocessor-service -d -p 8001:8001 preprocessor-service

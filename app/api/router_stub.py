@@ -47,11 +47,8 @@ async def preprocess_data_stub(
 
     # Basic file validation
     if not hdr_file and not cube_file:
-        # TODO: Load the most recent files from storage service
-        raise HTTPException(
-            status_code=501,
-            detail="Loading files from the storage component is not implemented yet."
-        )
+        # Simulate loading the file inputs from storage
+        time.sleep(0.2)
     else:
         result: VerificationResult = verify_hdr_and_cube_input(hdr_file, cube_file)
         if result.status_code != 200:

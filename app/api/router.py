@@ -1,8 +1,11 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
 from typing import Optional
 from app.util.verification import verify_hdr_and_cube_input, VerificationResult
 from app.schemas.data_models import PreprocessingParameters
+from app.core.preprocessor import preprocess
+import pandas as pd
+import tempfile
 import io
 
 router = APIRouter()
@@ -64,44 +67,14 @@ async def preprocess_data(
             )
 
     # --- TODO: Implement preprocessing logic ---
+    preprocessed_dataframe = await preprocess(hdr_file=hdr_file, cube_file=cube_file, params=params)
 
-    # For now just raising an error because not implemented
-    raise HTTPException(
-        status_code=501,
-        detail="Real preprocessor not yet implemented."
-    )
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_csv:
+        csv_file_path = temp_csv.name
+        preprocessed_dataframe.to_csv(csv_file_path, index=False)
 
-
-# Example of an endpoint that might accept a file upload for preprocessing
-@router.post("/preprocess-file-upload")
-async def preprocess_uploaded_file_real(file: UploadFile = File(...)):
-    if not file.filename.endswith(".csv"):  # Basic validation
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid file type. Only CSV supported."
-        )
-
-    # contents = await file.read()
-    # Process the contents (which will be bytes, decode if necessary)
-    # For example, decode to string and then process as CSV
-    # csv_data_string = contents.decode('utf-8')
-    # ... your processing logic ...
-
-    processed_csv_string = """
-    processed_header,processed_value\n
-    uploaded_and_done,123
-    """
-
-    s_buf = io.StringIO()
-    s_buf.write(processed_csv_string)
-    s_buf.seek(0)
-    bytes_buf = io.BytesIO(s_buf.getvalue().encode())
-
-    return StreamingResponse(
-        bytes_buf,
+    return FileResponse(
+        path=csv_file_path,
         media_type="text/csv",
-        headers={
-            "Content-Disposition": f"""attachment;
-            filename=processed_{file.filename}"""
-        }
+        filename="processed_reflectance_data.csv"
     )

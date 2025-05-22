@@ -31,7 +31,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy the rest of the application code
 COPY --chown=appuser:appgroup ./app ./app
-COPY --chown=appuser:appgroup ./app/data_mocks ./data_mocks
+COPY --chown=appuser:appgroup ./app/example_data ./example_data
 
 # Switch to the non-root user
 USER appuser
