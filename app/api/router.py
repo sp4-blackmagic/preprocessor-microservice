@@ -45,8 +45,7 @@ async def preprocess_data(
             status_code=400,
             detail="Invalid data cube file type. Only .raw and .bin extensions are supported"
         )
-    # --- TODO: Implement your actual preprocessing logic ---
-    # Apply cleaning, transformation, feature engineering
+    # --- TODO: Implement preprocessing logic ---
 
     # For now just raising an error because not implemented
     raise HTTPException(

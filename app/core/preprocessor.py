@@ -8,6 +8,7 @@ from spectral import SpyFile
 import os
 import sys
 import csv
+from fastapi import UploadFile, File
 
 # ====================
 # Function Definitoins
@@ -22,47 +23,7 @@ def read_wavelengths(img: SpyFile, lower: int, upper: int):
     wavelengths = np.linspace(lower, upper, num=img.nbands)  
     return wavelengths
 
-def preprocess():
-
-    # ==============
-    # Argparse Setup
-    # ==============
-
-    parser = argparse.ArgumentParser(prog=__name__,
-                                     description="Converts a .hdr file obtained"
-                                     "from the imec hyperspectral camera"
-                                     "into a csv containing reflectance data")
-    parser.add_argument("sample_hdr_path", help="The path to the sample .hdr file to be parsed")
-    parser.add_argument("label", help="Label of the provided sample")
-    parser.add_argument("csv_directory_path", help="The directory in which to save the .csv file with reflectance data")
-    parser.add_argument("--wv_lower_bound", default=400, type=float)
-    parser.add_argument("--wv_upper_bound", default=900, type=float)
-    args = parser.parse_args()
-
-    # ==================
-    # Resolve File Paths
-    # ==================
-
-    # Check if the samples exist at provided path
-    hdr_path = os.path.abspath(args.sample_hdr_path)
-    raw_path = hdr_path[:hdr_path.index('.')] + ".raw"
-    files_exist = True
-    if not os.path.isfile(hdr_path):
-        print(f"The hdr sample file at path '{hdr_path}' does not exist!")
-        files_exist = False
-    if not os.path.isfile(raw_path):
-        print(f"The raw sample file at path '{raw_path}' does not exist!")
-        files_exist = False
-    if not files_exist:
-        print(f"Could not resolve some file paths. Exiting program.")
-        sys.exit()
-
-    # Check if the output file directory exists
-    csv_dir = os.path.abspath(args.csv_directory_path)
-    if not os.path.isdir(csv_dir):
-        print(f"Directory at path {csv_dir} does not exist!")
-        sys.exit()
-
+def preprocess(hdr_file: UploadFile = File(...), cube_file: UploadFile = File(...)):
     # ====================================
     # Extract Reflectances and Count Means
     # ====================================

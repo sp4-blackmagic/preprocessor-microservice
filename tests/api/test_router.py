@@ -1,6 +1,9 @@
 from app.core.config import settings, PreprocessorVersion
 from app.schemas.data_models import PreprocessingParameters
+from app.util.csv_utils import read_csv, generate_headers
 import pytest
+import io
+import csv
 
 # ====================
 # Creating Dummy Input
@@ -25,11 +28,7 @@ def hdr_file():
 
 @pytest.fixture
 def params():
-    return PreprocessingParameters(
-        excludeMethods=None,
-        removeBackground=False,
-        convertWavelengths=False
-    )
+    return PreprocessingParameters()
 
 
 # ================
@@ -43,80 +42,81 @@ def test_service_alive(client):
     assert response.status_code == 200
 
 def test_upload_and_preprocess_bin_success(client, params, hdr_file, bin_file):
-    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
-        _files = {
-            "hdr_file": hdr_file,
-            "cube_file": bin_file
-        }
+    _files = {
+        "hdr_file": hdr_file,
+        "cube_file": bin_file
+    }
 
-        _data = {
-            "params_json": params.model_dump_json()
-        }
+    _data = {
+        "params_json": params.model_dump_json()
+    }
 
-        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
 
-        assert response.status_code == 200
-        assert "text/csv" in response.headers["content-type"]
+    # Check general response
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+
+    # Check response format
+    csv_reader = read_csv(response.content, "utf-8")
+    csv_response_header = next(csv_reader)
+    expected_headers = generate_headers(params.extraction_methods, params.bands, True)
+    assert csv_response_header == expected_headers
 
 def test_upload_and_preprocess_raw_success(client, params, hdr_file, raw_file):
-    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
-        _files = {
-            "hdr_file": hdr_file,
-            "cube_file": raw_file
-        }
+    _files = {
+        "hdr_file": hdr_file,
+        "cube_file": raw_file
+    }
 
-        _data = {
-            "params_json": params.model_dump_json()
-        }
+    _data = {
+        "params_json": params.model_dump_json()
+    }
 
-        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
 
-        assert response.status_code == 200
-        assert "text/csv" in response.headers["content-type"]
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
 
 # The api should process the request with default settings if
 # none are provided
 def test_no_input_success(client):
-    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
-
-        response = client.post("/preprocessor/api/preprocess")
-        assert response.status_code == 200
-        assert "text/csv" in response.headers["content-type"]
+    response = client.post("/preprocessor/api/preprocess")
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
 
 
 def test_missing_cube_file_failure(client, params, hdr_file):
-    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
-        _files = {
-            "hdr_file": hdr_file
-        }
+    _files = {
+        "hdr_file": hdr_file
+    }
 
-        _data = {
-            "params_json": params.model_dump_json()
-        }
+    _data = {
+        "params_json": params.model_dump_json()
+    }
 
-        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
-        assert response.status_code == 400
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+    assert response.status_code == 400
 
 def test_missing_hdr_file_failure(client, params, bin_file, raw_file):
-    if settings.PREPROCESSOR_VERSION == PreprocessorVersion.STUB:
-        # Test with inputing only the binary file first
-        _files = {
-            "cube_file": bin_file
-        }
+    # Test with inputing only the binary file first
+    _files = {
+        "cube_file": bin_file
+    }
 
-        _data = {
-            "params_json": params.model_dump_json()
-        }
+    _data = {
+        "params_json": params.model_dump_json()
+    }
 
-        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
-        assert response.status_code == 400
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+    assert response.status_code == 400
 
-        # Test with input only the raw file also
-        _files = {
-            "cube_file": raw_file
-        }
+    # Test with input only the raw file also
+    _files = {
+        "cube_file": raw_file
+    }
 
-        response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
-        assert response.status_code == 400
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+    assert response.status_code == 400
 
 
