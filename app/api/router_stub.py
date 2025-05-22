@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from app.schemas.data_models import PreprocessingParameters
 from typing import Optional
+from app.util.verification import VerificationResult, verify_hdr_and_cube_input
 import os
 import time
 
@@ -34,9 +35,8 @@ async def preprocess_data_stub(
         load them from the storage service
     """
     # Params validation
-    if params_json is None:
-        params = PreprocessingParameters()
-    else:
+    params: PreprocessingParameters = PreprocessingParameters()
+    if params_json is not None:
         try:
             params = PreprocessingParameters.model_validate_json(params_json)
         except Exception as e:
@@ -45,33 +45,19 @@ async def preprocess_data_stub(
                 detail=f"Invalid parameters for the request: {e}"
             )
 
-    if hdr_file is None and cube_file is None:
-        # Load data from storage service
-        time.sleep(0.1)
-    elif cube_file is None:
+    # Basic file validation
+    if not hdr_file and not cube_file:
+        # TODO: Load the most recent files from storage service
         raise HTTPException(
-            status_code=400,
-            detail="The request provided a header file but is missing a corresponding data cube file"
-        )
-    elif hdr_file is None:
-        raise HTTPException(
-            status_code=400,
-            detail="The request provided a data cube file bit is missing a corresponding header file"
+            status_code=501,
+            detail="Loading files from the storage component is not implemented yet."
         )
     else:
-        # Basic file validation
-        allowed_cube_extensions = [".raw", ".bin"]
-        hdr_extension = "." + hdr_file.filename.split(".")[-1].lower()
-        cube_extension = "." + cube_file.filename.split(".")[-1].lower()
-        if hdr_extension != ".hdr":
+        result: VerificationResult = verify_hdr_and_cube_input(hdr_file, cube_file)
+        if result.status_code != 200:
             raise HTTPException(
-                status_code=400,
-                detail="Invalid data cube header file type. Only .hdr extensions are supported."
-            )
-        if cube_extension not in allowed_cube_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid data cube file type. Only .raw and .bin extensions are supported"
+                status_code = result.status_code,
+                detail = result.message
             )
 
 

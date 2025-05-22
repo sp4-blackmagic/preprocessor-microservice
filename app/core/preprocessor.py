@@ -9,6 +9,7 @@ import os
 import sys
 import csv
 from fastapi import UploadFile, File
+from app.schemas.data_models import PreprocessingParameters
 
 # ====================
 # Function Definitoins
@@ -23,7 +24,7 @@ def read_wavelengths(img: SpyFile, lower: int, upper: int):
     wavelengths = np.linspace(lower, upper, num=img.nbands)  
     return wavelengths
 
-def preprocess(hdr_file: UploadFile = File(...), cube_file: UploadFile = File(...)):
+def preprocess(hdr_file: UploadFile = File(...), cube_file: UploadFile = File(...), params: PreprocessingParameters = PreprocessingParameters()):
     # ====================================
     # Extract Reflectances and Count Means
     # ====================================

@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
+from typing import Optional
+from app.util.verification import verify_hdr_and_cube_input, VerificationResult
 from app.schemas.data_models import PreprocessingParameters
 import io
 
@@ -9,9 +11,9 @@ router = APIRouter()
 # Add `response_model` if returning structured JSON
 @router.post("/preprocess")
 async def preprocess_data(
-    params: PreprocessingParameters, 
-    hdrFile: UploadFile = File(...), 
-    cubeFile: UploadFile = File(...)
+    params_json: Optional[str] = Form(None), 
+    hdr_file: Optional[UploadFile] = File(None), 
+    cube_file: Optional[UploadFile] = File(None)
 ):
     """
     The main function hosting the logic to the actual preprocessing endpoint.
@@ -34,17 +36,33 @@ async def preprocess_data(
     cubeFile: UploadFile
         The actual binary data of the data cube to be processed
     """
+
+    # Params validation
+    params: PreprocessingParameters = PreprocessingParameters()
+    if params_json is not None:
+        try:
+            params = PreprocessingParameters.model_validate_json(params_json)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid parameters for the request: {e}"
+            )
+
     # Basic file validation
-    if not hdrFile.filename.endswith(".hdr"): 
+    if not hdr_file and not cube_file:
+        # TODO: Load the most recent files from storage service
         raise HTTPException(
-            status_code=400,
-            detail="Invalid data cube header file type. Only .hdr extensions are supported."
+            status_code=501,
+            detail="Loading files from the storage component is not implemented yet."
         )
-    if not cubeFile.filename.endswith(".raw") or cubeFile.filename.endswith(".bin"):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid data cube file type. Only .raw and .bin extensions are supported"
-        )
+    else:
+        result: VerificationResult = verify_hdr_and_cube_input(hdr_file, cube_file)
+        if result.status_code != 200:
+            raise HTTPException(
+                status_code = result.status_code,
+                detail = result.message
+            )
+
     # --- TODO: Implement preprocessing logic ---
 
     # For now just raising an error because not implemented
