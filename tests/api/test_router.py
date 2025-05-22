@@ -60,7 +60,7 @@ def test_upload_and_preprocess_bin_success(client, params, hdr_file, bin_file):
     # Check response format
     csv_reader = read_csv(response.content, "utf-8")
     csv_response_header = next(csv_reader)
-    expected_headers = generate_headers(params.extraction_methods, params.bands, True)
+    expected_headers = generate_headers(params.extraction_methods, params.bands, params.extra_features)
     assert csv_response_header == expected_headers
 
 def test_upload_and_preprocess_raw_success(client, params, hdr_file, raw_file):

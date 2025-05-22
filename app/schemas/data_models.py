@@ -20,3 +20,4 @@ class PreprocessingParameters(BaseModel):
     ]))
     remove_background: bool = False
     bands: int = 224
+    extra_features: bool = True
