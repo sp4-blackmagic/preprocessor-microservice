@@ -3,46 +3,14 @@ import pandas as pd
 import tempfile
 import shutil
 import spectral.io.envi as envi
-from spectral.io.envi import SpectralLibrary, BilFile, BipFile, BsqFile
+from numpy import ndarray
 import os
 from fastapi import UploadFile, File
 from app.schemas.data_models import PreprocessingParameters
+from app.util.background_removal import calculate_simple_background_mask
 
-# async def extract_reflectance(path: str) -> SpyFile:
-#     img = spectral.open_image(path)
-#     reflectance_data = img.load()
-#     return reflectance_data
-
-# def read_wavelengths(img: SpyFile, lower: int, upper: int):
-#     wavelengths = np.linspace(lower, upper, num=img.nbands)  
-#     return wavelengths
-
-    # print("Calculating the mean reflectance for each wavelength band...")
-    # mean_reflectances = dict()
-    # for i in range(0, img.nrows):
-    #     for j in range(0, img.ncols):
-    #         for k in range(0, img.nbands):
-    #             if wavelengths[k] in mean_reflectances:
-    #                 mean_reflectances[wavelengths[k]] += img[i, j, k]
-    #             else:
-    #                 mean_reflectances[wavelengths[k]] = img[i, j, k]
-
-    # for wv in wavelengths:
-    #     mean_reflectances[wv] /= img.nrows * img.ncols
-    #     print(f"Wavelength: {wv}, Mean Reflectance: {mean_reflectances[wv]}")
-
-def calculate_average_spectrum(hyperspectral_image: SpectralLibrary | BilFile | BipFile | BsqFile):
-    avg_spectra = list()
-    bands = hyperspectral_image.nbands
-    for i in range(0, bands):
-        image = hyperspectral_image.read_band(i)
-        avg_spectra.append(0)
-        for row in image:
-            for val in row:
-                avg_spectra[i] += val
-                
-        avg_spectra[i] /= hyperspectral_image.nrows * hyperspectral_image.ncols
-
+def calculate_average_spectrum(img_data: ndarray, mask: ndarray):
+    avg_spectra = np.mean(img_data[mask], axis=0)
     # Reshape into a 2D array so it can be converted into a DataFrame
     return np.array(avg_spectra).reshape(1, -1)
 
@@ -79,20 +47,15 @@ async def preprocess(
         # since we are using files in the ENVI format, I am using
         # the spectral.io.envi function, and not the general spectral.open_image
         img = envi.open(temp_hdr_path, temp_cube_path)
+        img_data: ndarray = img.load().astype(np.float32)
         print(f"The parsed image has {img.nrows} rows, {img.ncols} columns, and {img.nbands} bands")
         print(f"The image takes up approximately {4 * img.nrows * img.ncols * img.nbands / 1024 / 1024} MB of memory")
-        
-        # # Find the minimum and maximum wavelength values
-        # wavelengths: list[float] = []
-        # for wv in img.metadata["wavelength"]:
-        #     wavelengths.append(float(wv))
-            
-        # min_wv = min(wavelengths)
-        # max_wv = max(wavelengths)
-        # print(f"The wavelength values are between {min_wv}nm and {max_wv}nm")
+
+        mask = calculate_simple_background_mask(img_data)
 
         # Extract Average Spectrum
-        extracted = calculate_average_spectrum(hyperspectral_image=img)
+        extracted = calculate_average_spectrum(img_data=img_data, mask=mask)
+        print(extracted)
 
         # Create and return a .csv response file
         column_names = [f"avg_spectrum_b{i}" for i in range(0, img.nbands)]
@@ -112,39 +75,3 @@ async def preprocess(
         await hdr_file.close()
         await cube_file.close()
     
-
-    # print(f"Trying to extract reflectance data from '{hdr_path}'...")
-    # img = extract_reflectance(path=hdr_path)
-    # print(f"The parsed image has {img.nrows} rows, {img.ncols} columns, and {img.nbands} bands")
-
-
-    # lower_wv_bound = float(args.wv_lower_bound)
-    # upper_wv_bound = float(args.wv_upper_bound)
-    # wavelengths = read_wavelengths(img=img, lower=lower_wv_bound, upper=upper_wv_bound)
-    # print(f"Created {img.bands} bands between the wavelengths {lower_wv_bound} and {upper_wv_bound}")
-
-
-
-    # # =================
-    # # Saving the Output
-    # # =================
-
-    # # Generate a name for the csv file
-    # csv_name = ""
-    # if args.label == None:
-    #     csv_name = "unknown"
-    # else:
-    #     csv_name = str(args.label)
-
-    # file_number = 1
-    # csv_path = f"{csv_dir}/{csv_name}_{file_number}.csv"
-    # while os.path.isfile(csv_path):
-    #     file_number += 1
-
-    # # Save the csv file
-    # with open(csv_path, mode="w", newline="") as file:
-    #     writer = csv.writer(file)
-    #     writer.writerow(wavelengths)
-    #     writer.writerow(mean_reflectances.values())
-
-    # print(f"Saved the results to '{csv_path}'")
