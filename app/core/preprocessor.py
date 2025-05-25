@@ -78,7 +78,7 @@ async def preprocess(
         if ExtractionMethods.AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.AVG_SPECTRUM] = avg_spectrum
 
-        # Calculate First Derivative of Average Spectrum
+        # 1st Derivative of Average Spectrum
         if ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM] = savgol_filter(avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(avg_spectrum)
 
@@ -95,11 +95,15 @@ async def preprocess(
             else:
                 extracted_features[ExtractionMethods.SNV_AVG_SPECTRUM] = avg_spectrum - np.mean(avg_spectrum)
 
+        # 1st Derivative of Continuum Removed Spectrum
+        if ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM in params.extraction_methods:
+            extracted_features[ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUMl] = savgol_filter(cr_avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(cr_avg_spectrum)
+
         # ===================================================
         # Create and return DataFrame from extracted features
         # ===================================================
         column_names = []
-        data = []
+        data = np.array([], dtype=np.float32)
         if params.extra_features: 
             column_names = [
                 "record_json_id",
@@ -114,11 +118,13 @@ async def preprocess(
                 "init_weight",
                 "storage_days"
             ]
+            data = data + [None for i in range(11)] # Blank values for the extra features
         for key, value in extracted_features:
             column_names = column_names + [f"{key}{i}" for i in range(0, params.target_bands)]
             data = data + value
 
-        df = pd.DataFrame(avg_spectrum, columns=column_names)
+        data = data.reshape(1, -1)
+        df = pd.DataFrame(data, columns=column_names)
         return df
 
     except Exception as e:
