@@ -78,15 +78,22 @@ async def preprocess(
         if ExtractionMethods.AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.AVG_SPECTRUM] = avg_spectrum
 
-        # Calculate First Derivative
+        # Calculate First Derivative of Average Spectrum
         if ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM] = savgol_filter(avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(avg_spectrum)
 
-        # Continuum Removed Average Spectrum
+        # Continuum Removed from Average Spectrum
         # Calculating anyways because its used in other methods
         cr_avg_spectrum = calculate_continuum_removal(avg_spectrum, target_wavelengths)
         if ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM] = cr_avg_spectrum
+
+        # Standard Normal Variate of Average Spectrum
+        if ExtractionMethods.SNV_AVG_SPECTRUM in params.extraction_methods:
+            if np.std(avg_spectrum) > (1e-9):
+                extracted_features[ExtractionMethods.SNV_AVG_SPECTRUM] = (avg_spectrum - np.mean(avg_spectrum)) / np.std(avg_spectrum)
+            else:
+                extracted_features[ExtractionMethods.SNV_AVG_SPECTRUM] = avg_spectrum - np.mean(avg_spectrum)
 
         # ===================================================
         # Create and return DataFrame from extracted features
