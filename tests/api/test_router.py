@@ -116,4 +116,31 @@ def test_missing_hdr_file_failure(client, params, bin_file, raw_file):
     response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
     assert response.status_code == 400
 
+def test_upload_wrong_hdr_bin_failure(client, params, hdr_file, bin_file):
+    _files = {
+        "hdr_file": hdr_file,
+        "cube_file": bin_file
+    }
 
+    _data = {
+        "params_json": params.model_dump_json()
+    }
+
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+
+    # Check general response
+    assert response.status_code == 400
+
+def test_upload_wrong_hdr_raw_failure(client, params, hdr_file, raw_file):
+    _files = {
+        "hdr_file": hdr_file,
+        "cube_file": raw_file
+    }
+
+    _data = {
+        "params_json": params.model_dump_json()
+    }
+
+    response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
+
+    assert response.status_code == 400

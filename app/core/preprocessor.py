@@ -66,7 +66,10 @@ async def preprocess(
 
     except Exception as e:
         # TODO: Handle exceptions here
-        print(f"Error occured during data preprocessing! Exception: {e}")
+        if isinstance(e, AttributeError):
+            raise AttributeError(f"Exception: Wrong .hdr file format. Only ENVI header files are supported.")
+        else:
+            print(f"Error occured during data preprocessing! Exception: {e}")
     finally:
         # Clean up temporary files
         if os.path.exists(temp_hdr_path):

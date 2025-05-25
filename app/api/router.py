@@ -66,16 +66,22 @@ async def preprocess_data(
                 detail = result.message
             )
 
-    preprocessed_dataframe = await preprocess(hdr_file=hdr_file, cube_file=cube_file, params=params)
+    try: 
+        preprocessed_dataframe = await preprocess(hdr_file=hdr_file, cube_file=cube_file, params=params)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_csv:
-        # can't really clean up this link through os.unlink so leaving
-        # it as is, probably don't have to do it either way since using `with``
-        csv_file_path = temp_csv.name
-        preprocessed_dataframe.to_csv(csv_file_path, index=False)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as temp_csv:
+            # can't really clean up this link through os.unlink so leaving
+            # it as is, probably don't have to do it either way since using `with``
+            csv_file_path = temp_csv.name
+            preprocessed_dataframe.to_csv(csv_file_path, index=False)
 
-    return FileResponse(
-        path=csv_file_path,
-        media_type="text/csv",
-        filename="processed_reflectance_data.csv"
-    )
+        return FileResponse(
+            path=csv_file_path,
+            media_type="text/csv",
+            filename="processed_reflectance_data.csv"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,   
+            detail = f"Error: {e}"
+        )
