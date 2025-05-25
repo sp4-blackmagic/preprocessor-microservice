@@ -19,5 +19,9 @@ class PreprocessingParameters(BaseModel):
         ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM
     ]))
     remove_background: bool = False
-    bands: int = 224
-    extra_features: bool = True
+    background_treshold: float = 0.1
+    extra_features: bool = True  # Whether to include the features like "original_file_ref" and so on, look for extracted_features_VIS_test_unbalanced for the idea
+    target_bands: int = 224
+    resampling_kind: str = "linear"
+    min_wavelength: int = 470
+    max_wavelength: int = 900

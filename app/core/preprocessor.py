@@ -10,6 +10,7 @@ from fastapi import UploadFile, File
 from app.schemas.data_models import PreprocessingParameters
 from app.util.background_removal import calculate_simple_background_mask
 from app.core.extraction import calculate_average_spectrum
+from app.core.resampling import resample_img_data
 
 
 SG_WINDOW_DERIV = 11
@@ -51,6 +52,20 @@ async def preprocess(
         print(f"The parsed image has {img.nrows} rows, {img.ncols} columns, and {img.nbands} bands")
         print(f"The image takes up approximately {4 * img.nrows * img.ncols * img.nbands / 1024 / 1024} MB of memory")
 
+        # Get the original wavelength values for later resampling
+        original_wavelengths = None
+        if hasattr(img, "metadata") and "wavelengths" in img.metadata: original_wavelengths = img.metadata["wavelengths"]
+        else: original_wavelengths = np.linspace(params.min_wavelength, params.max_wavelength, img.nbands) # No wavelength values provided, assume default spectrum
+
+        # Resample the data to fit target dimensions
+        img_data = resample_img_data(
+            img_data=img_data,
+            original_wavelengths=original_wavelengths,
+            target_bands=params.target_bands,
+            kind=params.resampling_kind
+        )
+
+        # Get the mask to remove background
         mask = calculate_simple_background_mask(img_data)
 
         # Extract Average Spectrum

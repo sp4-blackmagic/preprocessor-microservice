@@ -6,7 +6,7 @@ def resample_img_data(
     original_wavelengths: np.ndarray,
     target_bands: int,
     kind: str = 'linear'
-):
+) -> np.ndarray: 
     """
     Resamples a 3D hyperspectral data cube along the band (wavelength) dimension.
 
