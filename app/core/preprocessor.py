@@ -4,12 +4,16 @@ import tempfile
 import shutil
 import spectral.io.envi as envi
 from numpy import ndarray
+from scipy.signal import savgol_filter
 import os
 from fastapi import UploadFile, File
 from app.schemas.data_models import PreprocessingParameters
 from app.util.background_removal import calculate_simple_background_mask
 from app.core.extraction import calculate_average_spectrum
 
+
+SG_WINDOW_DERIV = 11
+SG_POLYORDER_DERIV = 2
 
 async def preprocess(
     hdr_file: UploadFile = File(...),
@@ -50,12 +54,13 @@ async def preprocess(
         mask = calculate_simple_background_mask(img_data)
 
         # Extract Average Spectrum
-        extracted = calculate_average_spectrum(img_data=img_data, mask=mask)
-        print(extracted)
+        avg_spectrum = calculate_average_spectrum(img_data=img_data, mask=mask)
+        # Calculate First Derivative
+        deriv1_avg_spectrum = savgol_filter(avg_spectrum, SG_WINDOW_DERIV, SG_POLYORDER_DERIV, deriv=1) if img_data.nbands > SG_WINDOW_DERIV else np.zeros_like(avg_spectrum)
 
         # Create and return a .csv response file
         column_names = [f"avg_spectrum_b{i}" for i in range(0, img.nbands)]
-        df = pd.DataFrame(extracted, columns=column_names)
+        df = pd.DataFrame(avg_spectrum, columns=column_names)
 
         return df
 
