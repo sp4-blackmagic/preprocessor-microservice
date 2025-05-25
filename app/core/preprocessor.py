@@ -8,11 +8,7 @@ import os
 from fastapi import UploadFile, File
 from app.schemas.data_models import PreprocessingParameters
 from app.util.background_removal import calculate_simple_background_mask
-
-def calculate_average_spectrum(img_data: ndarray, mask: ndarray):
-    avg_spectra = np.mean(img_data[mask], axis=0)
-    # Reshape into a 2D array so it can be converted into a DataFrame
-    return np.array(avg_spectra).reshape(1, -1)
+from app.core.extraction import calculate_average_spectrum
 
 
 async def preprocess(

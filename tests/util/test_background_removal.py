@@ -43,7 +43,7 @@ import pytest
                 [False,  True]
             ], dtype=bool)
         ),
-        # Test Case 4: All values below threshold in a 2D image
+        # Test Case 4: All values below threshold in a 2D image, mask still should not be all False
         (
             np.array([
                 [0.01, 0.02],
@@ -51,11 +51,11 @@ import pytest
             ], dtype=np.float32),
             0.1, # threshold
             np.array([
-                [False, False],
-                [False, False]
+                [False, True],
+                [True, True]
             ], dtype=bool)
         ),
-        # Test Case 5: All values above threshold (or equal) in a 2D image
+        # Test Case 5: All values above threshold (or equal) in a 2D image, mask still should not be all True
         (
             np.array([
                 [0.6, 0.7],
@@ -63,7 +63,7 @@ import pytest
             ], dtype=np.float32),
             0.5, # threshold
             np.array([
-                [ True,  True],
+                [ False,  False],
                 [ True,  True]
             ], dtype=bool)
         ),
