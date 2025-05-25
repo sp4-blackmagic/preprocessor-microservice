@@ -12,7 +12,7 @@ def mismatched_resampling_data():
             [[0.7, 0.8, 0.6], [0.8, 0.9, 0.7]]
         ], dtype=np.float32),
         np.linspace(470, 900, 50),
-        100
+        np.linspace(470, 900, 100)
     )
 
 @pytest.fixture(
@@ -58,6 +58,6 @@ def test_resampling_interpolate_and_extrapolate(resampling_test_data):
         target_wavelengths=target_wavelengths,
         kind="linear"
     )
-    expected_shape = img_data.shape[:-1] + (target_wavelengths,)
+    expected_shape = img_data.shape[:-1] + (len(target_wavelengths),)
     assert resampled.shape == expected_shape
     assert np.all(resampled < 10) and np.all(resampled > -10) # pretty generous reflectance value check

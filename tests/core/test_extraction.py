@@ -175,15 +175,15 @@ def test_average_spectrum_wrong_dimensions():
         )
     ],
     ids=[
-        "simple_absorption",
+        "simple_absorption", # Failing
         "rising_linear_spectrum",
         "flat_spectrum",
-        "wavelengths_descending_order",
-        "spectrum_with_nan_partial_interp",
+        "wavelengths_descending_order", # Failing
+        "spectrum_with_nan_partial_interp", # Failing
         "len_lt_3_points",
         "mismatch_len_truncate_lt_3",
-        "mismatch_len_truncate_ge_3",
-        "duplicate_wavelengths",
+        "mismatch_len_truncate_ge_3", # Failing
+        "duplicate_wavelengths", # Failing
         "all_inf_values",
         "all_nan_values",
         "empty_spectrum"
