@@ -11,6 +11,7 @@ from app.schemas.data_models import PreprocessingParameters, ExtractionMethods
 from app.util.background_removal import calculate_simple_background_mask
 from app.core.extraction import calculate_average_spectrum, calculate_continuum_removal
 from app.core.resampling import resample_img_data, resize_wavelengths
+from app.util.csv_utils import create_feature_row
 
 async def preprocess(
     hdr_file: UploadFile = File(...),
@@ -35,9 +36,9 @@ async def preprocess(
     with open(temp_cube_path, "wb") as temp_cube:
         shutil.copyfileobj(cube_file.file, temp_cube)
 
-    # =====================
-    # Open and prepare file
-    # =====================
+    # ===========================
+    # Open file and resample data
+    # ===========================
 
     try:
         # Open the image using spectral and extract reflectance
@@ -70,69 +71,49 @@ async def preprocess(
         # ================
         # Extract Features
         # ================
+
         extracted_features = dict()
         
         # Average Spectrum
         # Calculating it anyways because its used in other methods
+        print("avg")
         avg_spectrum = calculate_average_spectrum(img_data=img_data, mask=mask)
         if ExtractionMethods.AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.AVG_SPECTRUM] = avg_spectrum
-
+        print("first")
         # 1st Derivative of Average Spectrum
         if ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM] = savgol_filter(avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(avg_spectrum)
-
+        print("continuum")
         # Continuum Removed from Average Spectrum
         # Calculating anyways because its used in other methods
         cr_avg_spectrum = calculate_continuum_removal(avg_spectrum, target_wavelengths)
         if ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM in params.extraction_methods:
             extracted_features[ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM] = cr_avg_spectrum
-
+        print("snv")
         # Standard Normal Variate of Average Spectrum
         if ExtractionMethods.SNV_AVG_SPECTRUM in params.extraction_methods:
             if np.std(avg_spectrum) > (1e-9):
                 extracted_features[ExtractionMethods.SNV_AVG_SPECTRUM] = (avg_spectrum - np.mean(avg_spectrum)) / np.std(avg_spectrum)
             else:
                 extracted_features[ExtractionMethods.SNV_AVG_SPECTRUM] = avg_spectrum - np.mean(avg_spectrum)
-
+        print("last")
         # 1st Derivative of Continuum Removed Spectrum
         if ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM in params.extraction_methods:
-            extracted_features[ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUMl] = savgol_filter(cr_avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(cr_avg_spectrum)
+            extracted_features[ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM] = savgol_filter(cr_avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(cr_avg_spectrum)
 
         # ===================================================
         # Create and return DataFrame from extracted features
         # ===================================================
-        column_names = []
-        data = np.array([], dtype=np.float32)
-        if params.extra_features: 
-            column_names = [
-                "record_json_id",
-                "original_file_ref",
-                "fruit",
-                "day",
-                "side",
-                "camera_type",
-                "ripeness_state",
-                "ripeness_state_fine",
-                "firmness",
-                "init_weight",
-                "storage_days"
-            ]
-            data = data + [None for i in range(11)] # Blank values for the extra features
-        for key, value in extracted_features:
-            column_names = column_names + [f"{key}{i}" for i in range(0, params.target_bands)]
-            data = data + value
 
-        data = data.reshape(1, -1)
-        df = pd.DataFrame(data, columns=column_names)
-        return df
+        return create_feature_row(extracted_features, params)
 
     except Exception as e:
         # TODO: Handle exceptions here
-        if isinstance(e, AttributeError):
-            raise AttributeError(f"Exception: Wrong .hdr file format. Only ENVI header files are supported.")
-        else:
-            print(f"Error occured during data preprocessing! Exception: {e}")
+        raise Exception(f"Internal error occured during data preprocessing! Exception: {e}.")
+        # if isinstance(e, AttributeError):
+        #     raise AttributeError(f"Exception: Wrong .hdr file format. Only ENVI header files are supported.")
+        # else:
     finally:
         # Clean up temporary files
         if os.path.exists(temp_hdr_path):
