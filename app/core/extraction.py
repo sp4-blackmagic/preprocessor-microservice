@@ -13,5 +13,4 @@ def calculate_average_spectrum(img_data: ndarray, mask: Optional[ndarray]):
         else: mask = np.full(img_data.shape, True, dtype=bool)
 
     avg_spectra = np.mean(img_data[mask], axis=0)
-    # Reshape into a 2D array so it can be converted into a DataFrame
-    return np.array(avg_spectra).reshape(1, -1)
+    return avg_spectra

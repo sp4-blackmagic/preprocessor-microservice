@@ -16,7 +16,7 @@ from app.core.extraction import calculate_average_spectrum
                 [ True,  True,  True],
                 [False, False, False]
             ], dtype=bool),
-            np.array([0.8], dtype=np.float32).reshape(1, -1)
+            np.array([0.8], dtype=np.float32)
         ),
         # Test Case 2: Simple 3D image, 3 bands, and a corresponding mask
         (
@@ -28,7 +28,7 @@ from app.core.extraction import calculate_average_spectrum
                 [False, False],
                 [ True,  True]
             ], dtype=bool),
-            np.array([0.75, 0.85, 0.65], dtype=np.float32).reshape(1, -1)
+            np.array([0.75, 0.85, 0.65], dtype=np.float32)
         )
     ],
     ids=[
@@ -43,8 +43,6 @@ def average_spectrum_test_data(request):
 def test_average_spectrum_extraction(average_spectrum_test_data):
     img_data, mask, expected_result = average_spectrum_test_data
     result = calculate_average_spectrum(img_data=img_data, mask=mask)
-    print(result)
-    print(expected_result)
     np.testing.assert_array_equal(result, expected_result)
 
 def test_average_spectrum_no_mask():
