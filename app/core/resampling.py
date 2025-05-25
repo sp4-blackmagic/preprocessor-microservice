@@ -1,10 +1,16 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
+def resize_wavelengths(original_wavelengths: np.ndarray, target_bands: int):
+    min_wv = np.min(original_wavelengths)
+    max_wv = np.max(original_wavelengths)
+    target_wavelengths = np.linspace(min_wv, max_wv, target_bands)
+    return target_wavelengths
+
 def resample_img_data(
     img_data: np.ndarray,
     original_wavelengths: np.ndarray,
-    target_bands: int,
+    target_wavelengths: np.ndarray,
     kind: str = 'linear'
 ) -> np.ndarray: 
     """
@@ -23,9 +29,7 @@ def resample_img_data(
                     (height, width, target_num_bands).
     """
     height, width, bands = img_data.shape
-    min_wv = np.min(original_wavelengths)
-    max_wv = np.max(original_wavelengths)
-    target_wavelengths = np.linspace(min_wv, max_wv, target_bands)
+    target_bands = len(target_wavelengths)
 
     # Validate input dimensions
     if bands != len(original_wavelengths):

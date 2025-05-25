@@ -7,14 +7,10 @@ from numpy import ndarray
 from scipy.signal import savgol_filter
 import os
 from fastapi import UploadFile, File
-from app.schemas.data_models import PreprocessingParameters
+from app.schemas.data_models import PreprocessingParameters, ExtractionMethods
 from app.util.background_removal import calculate_simple_background_mask
-from app.core.extraction import calculate_average_spectrum
-from app.core.resampling import resample_img_data
-
-
-SG_WINDOW_DERIV = 11
-SG_POLYORDER_DERIV = 2
+from app.core.extraction import calculate_average_spectrum, calculate_continuum_removal
+from app.core.resampling import resample_img_data, resize_wavelengths
 
 async def preprocess(
     hdr_file: UploadFile = File(...),
@@ -39,9 +35,9 @@ async def preprocess(
     with open(temp_cube_path, "wb") as temp_cube:
         shutil.copyfileobj(cube_file.file, temp_cube)
 
-    # ====================================
-    # Extract Reflectances and Count Means
-    # ====================================
+    # =====================
+    # Open and prepare file
+    # =====================
 
     try:
         # Open the image using spectral and extract reflectance
@@ -57,26 +53,65 @@ async def preprocess(
         if hasattr(img, "metadata") and "wavelengths" in img.metadata: original_wavelengths = img.metadata["wavelengths"]
         else: original_wavelengths = np.linspace(params.min_wavelength, params.max_wavelength, img.nbands) # No wavelength values provided, assume default spectrum
 
+        # Get the target wavelengths from original
+        target_wavelengths = resize_wavelengths(original_wavelengths=original_wavelengths, target_bands=params.target_bands)
+
         # Resample the data to fit target dimensions
         img_data = resample_img_data(
             img_data=img_data,
             original_wavelengths=original_wavelengths,
-            target_bands=params.target_bands,
+            target_wavelengths=target_wavelengths,
             kind=params.resampling_kind
         )
 
         # Get the mask to remove background
         mask = calculate_simple_background_mask(img_data)
 
-        # Extract Average Spectrum
+        # ================
+        # Extract Features
+        # ================
+        extracted_features = dict()
+        
+        # Average Spectrum
+        # Calculating it anyways because its used in other methods
         avg_spectrum = calculate_average_spectrum(img_data=img_data, mask=mask)
+        if ExtractionMethods.AVG_SPECTRUM in params.extraction_methods:
+            extracted_features[ExtractionMethods.AVG_SPECTRUM] = avg_spectrum
+
         # Calculate First Derivative
-        deriv1_avg_spectrum = savgol_filter(avg_spectrum, SG_WINDOW_DERIV, SG_POLYORDER_DERIV, deriv=1) if img_data.nbands > SG_WINDOW_DERIV else np.zeros_like(avg_spectrum)
+        if ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM in params.extraction_methods:
+            extracted_features[ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM] = savgol_filter(avg_spectrum, params.sg_window_deriv, params.sg_polyorder_deriv, deriv=1) if params.target_bands > params.sg_window_deriv else np.zeros_like(avg_spectrum)
 
-        # Create and return a .csv response file
-        column_names = [f"avg_spectrum_b{i}" for i in range(0, img.nbands)]
+        # Continuum Removed Average Spectrum
+        # Calculating anyways because its used in other methods
+        cr_avg_spectrum = calculate_continuum_removal(avg_spectrum, target_wavelengths)
+        if ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM in params.extraction_methods:
+            extracted_features[ExtractionMethods.CONTINUUM_REMOVED_AVG_SPECTRUM] = cr_avg_spectrum
+
+        # ===================================================
+        # Create and return DataFrame from extracted features
+        # ===================================================
+        column_names = []
+        data = []
+        if params.extra_features: 
+            column_names = [
+                "record_json_id",
+                "original_file_ref",
+                "fruit",
+                "day",
+                "side",
+                "camera_type",
+                "ripeness_state",
+                "ripeness_state_fine",
+                "firmness",
+                "init_weight",
+                "storage_days"
+            ]
+        for key, value in extracted_features:
+            column_names = column_names + [f"{key}{i}" for i in range(0, params.target_bands)]
+            data = data + value
+
         df = pd.DataFrame(avg_spectrum, columns=column_names)
-
         return df
 
     except Exception as e:

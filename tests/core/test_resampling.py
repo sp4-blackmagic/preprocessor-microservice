@@ -22,13 +22,13 @@ def mismatched_resampling_data():
         (
             np.random.rand(100, 100, 50).astype(np.float32) * 0.8 + 0.1, # Random 100x100 reflectance data
             np.linspace(470, 900, 50), # Sample wavelength values
-            100 # Amount of bands to extrapolate to
+            np.linspace(470, 900, 100) # Wavelengths to extrapolate to
         ),
         # Test Case 2: Interpolate a 100x100 image from 100 to 50 bands
         (
             np.random.rand(100, 100, 100).astype(np.float32) * 0.8 + 0.1, # Random 100x100 reflectance data
             np.linspace(470, 900, 100), # Sample wavelength values
-            50 # Amount of bands to interpolate to
+            np.linspace(470, 900, 50) # Wavelengths to interpolate to
         )
     ],
     ids=[
@@ -37,27 +37,27 @@ def mismatched_resampling_data():
     ]
 )
 def resampling_test_data(request):
-    img_data, original_wavelengths, target_bands = request.param
-    return img_data, original_wavelengths, target_bands
+    img_data, original_wavelengths, target_wavelengths = request.param
+    return img_data, original_wavelengths, target_wavelengths
 
 def test_resampling_mismatched_dimensions(mismatched_resampling_data):
-    img_data, original_wavelengths, target_bands = mismatched_resampling_data
+    img_data, original_wavelengths, target_wavelenghts = mismatched_resampling_data
     with pytest.raises(ValueError):
         resampled = resample_img_data(
             img_data=img_data,
             original_wavelengths=original_wavelengths,
-            target_bands=target_bands,
+            target_wavelengths=target_wavelenghts,
             kind="linear"
         )
 
 def test_resampling_interpolate_and_extrapolate(resampling_test_data):
-    img_data, original_wavelengths, target_bands = resampling_test_data
+    img_data, original_wavelengths, target_wavelengths = resampling_test_data
     resampled = resample_img_data(
         img_data=img_data,
         original_wavelengths=original_wavelengths,
-        target_bands=target_bands,
+        target_wavelengths=target_wavelengths,
         kind="linear"
     )
-    expected_shape = img_data.shape[:-1] + (target_bands,)
+    expected_shape = img_data.shape[:-1] + (target_wavelengths,)
     assert resampled.shape == expected_shape
     assert np.all(resampled < 10) and np.all(resampled > -10) # pretty generous reflectance value check

@@ -25,3 +25,5 @@ class PreprocessingParameters(BaseModel):
     resampling_kind: str = "linear"
     min_wavelength: int = 470
     max_wavelength: int = 900
+    sg_window_deriv: int = 11
+    sg_polyorder_deriv: int = 2
