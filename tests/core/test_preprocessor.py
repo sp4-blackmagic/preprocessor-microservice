@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from app.schemas.data_models import PreprocessingParameters
+from app.schemas.exceptions import InvalidFileFormatError
 from app.core.preprocessor import preprocess
 
 # ====================
@@ -30,5 +31,5 @@ def params():
 
 @pytest.mark.asyncio
 async def test_upload_wrong_hdr_format(hdr_file, bin_file, params):
-    with pytest.raises(AttributeError):
+    with pytest.raises(InvalidFileFormatError):
         await preprocess(hdr_file=hdr_file, cube_file=bin_file, params=params)
