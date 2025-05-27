@@ -1,4 +1,5 @@
 from app.schemas.data_models import PreprocessingParameters
+from app.schemas.exceptions import InvalidFileFormatError
 from app.util.csv_utils import read_csv, generate_headers
 import pytest
 
@@ -20,7 +21,12 @@ def bin_file():
 @pytest.fixture
 def hdr_file():
     # Dummy hdr file for testing
-    content = b'DIMENSIONS=10,10,1\nDATATYPE=uint8\n'
+    content = b'ENVI\naqcuisition time = 2025-04-29T15:28:01,406332Z\nband names = {470nm, 600nm, 750nm, 900nm }\nbands=4\nfile type = ENVI Standard'
+    return ("dummy.hdr", content, "application/octet-stream")
+
+@pytest.fixture
+def wrong_hdr_file():
+    content = b'Some random content'
     return ("dummy.hdr", content, "application/octet-stream")
 
 @pytest.fixture
@@ -75,12 +81,10 @@ def test_upload_and_preprocess_raw_success(client, params, hdr_file, raw_file):
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
 
-# The api should process the request with default settings if
-# none are provided
-def test_no_input_success(client):
+
+def test_no_input_failure(client):
     response = client.post("/preprocessor/api/preprocess")
-    assert response.status_code == 200
-    assert "text/csv" in response.headers["content-type"]
+    assert response.status_code == 400
 
 
 def test_missing_cube_file_failure(client, params, hdr_file):
@@ -116,9 +120,9 @@ def test_missing_hdr_file_failure(client, params, bin_file, raw_file):
     response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
     assert response.status_code == 400
 
-def test_upload_wrong_hdr_bin_failure(client, params, hdr_file, bin_file):
+def test_upload_wrong_hdr_bin_failure(client, params, wrong_hdr_file, bin_file):
     _files = {
-        "hdr_file": hdr_file,
+        "hdr_file": wrong_hdr_file,
         "cube_file": bin_file
     }
 
@@ -127,13 +131,13 @@ def test_upload_wrong_hdr_bin_failure(client, params, hdr_file, bin_file):
     }
 
     response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
-
+    print(response)
     # Check general response
     assert response.status_code == 400
 
-def test_upload_wrong_hdr_raw_failure(client, params, hdr_file, raw_file):
+def test_upload_wrong_hdr_raw_failure(client, params, wrong_hdr_file, raw_file):
     _files = {
-        "hdr_file": hdr_file,
+        "hdr_file": wrong_hdr_file,
         "cube_file": raw_file
     }
 
@@ -142,5 +146,5 @@ def test_upload_wrong_hdr_raw_failure(client, params, hdr_file, raw_file):
     }
 
     response = client.post("/preprocessor/api/preprocess", files=_files, data=_data)
-
+    print(response)
     assert response.status_code == 400

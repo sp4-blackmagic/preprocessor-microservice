@@ -58,10 +58,10 @@ async def preprocess(
 
             # Get the original wavelength values for later resampling
             original_wavelengths = None
-            if hasattr(img, "metadata") and "wavelengths" in img.metadata and img.metadata["wavelengths"]: 
+            if hasattr(img, "metadata") and "wavelength" in img.metadata and img.metadata["wavelength"]: 
                 try:
                     # Ensure the wavelengths are loaded in as float values
-                    original_wavelengths = np.array([float(w) for w in img.metadata["wavelengths"]])
+                    original_wavelengths = np.array([float(w) for w in img.metadata["wavelength"]])
                     if len(original_wavelengths) != img.nbands:
                         raise MissingMetadataError(detail="Wavelength array lenght in the header file does not match the number of bands.")
                 except ValueError:
@@ -152,14 +152,14 @@ async def preprocess(
 
     finally:
         # Clean up temporary files
-        if os.path.exists(temp_hdr_path):
+        if temp_hdr_path and os.path.exists(temp_hdr_path):
             os.unlink(temp_hdr_path)
-        if os.path.exists(temp_cube_path):            
+        if temp_cube_path and os.path.exists(temp_cube_path):            
             os.unlink(temp_cube_path)
 
         # Close file streams
-        if hdr_file.file:
+        if hasattr(hdr_file, "file") and hdr_file.file:
             await hdr_file.close()
-        if cube_file.file:
+        if hasattr(cube_file, "file") and cube_file.file:
             await cube_file.close()
     
