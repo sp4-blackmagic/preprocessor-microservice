@@ -12,7 +12,8 @@ dependencies = [
     "pandas>=2.2.3",
     "httpx>=0.28.1",
     "flake8>=7.2.0",
-    "scipy>=1.15.3"
+    "scipy>=1.15.3",
+    "ultralytics>=8.3.145" 
 ]
 
 [tool.pytest.ini_options]

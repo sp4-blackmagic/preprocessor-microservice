@@ -10,6 +10,9 @@ ENV PYTHONUNBUFFERED=1
 # Set working directory
 WORKDIR /app
 
+# Some dependencies for ultralytics 
+RUN apt-get update && apt-get install libgl1 libglib2.0-0 -y
+
 # Install uv
 RUN pip install --no-cache-dir uv
 
