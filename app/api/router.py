@@ -1,17 +1,14 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from typing import Optional
-from app.util.verification import verify_hdr_and_cube_input, VerificationResult
+from app.util.validation import basic_file_validation
 from app.schemas.data_models import PreprocessingParameters, get_preprocessing_params
+from app.schemas.exceptions import PreprocessingError
 from app.core.preprocessor import preprocess
-import pandas as pd
 import tempfile
-import io
 
 router = APIRouter()
 
-
-# Add `response_model` if returning structured JSON
 @router.post("/preprocess")
 async def preprocess_data(
     params: PreprocessingParameters = Depends(get_preprocessing_params), 
@@ -34,20 +31,11 @@ async def preprocess_data(
         The actual binary data of the data cube to be processed
     """
 
-    # Basic file validation
-    if not hdr_file and not cube_file:
-        # TODO: Load the most recent files from storage service
-        raise HTTPException(
-            status_code=501,
-            detail="Loading files from the storage component is not implemented yet."
-        )
-    else:
-        result: VerificationResult = verify_hdr_and_cube_input(hdr_file, cube_file)
-        if result.status_code != 200:
-            raise HTTPException(
-                status_code = result.status_code,
-                detail = result.message
-            )
+    try:
+        basic_file_validation(hdr_file=hdr_file, cube_file=cube_file)
+    except PreprocessingError as e:
+        raise e  # re-raising the exception since its already formatted
+    
 
     try: 
         preprocessed_dataframe = await preprocess(hdr_file=hdr_file, cube_file=cube_file, params=params)
