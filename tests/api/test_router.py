@@ -1,28 +1,50 @@
 from app.schemas.data_models import PreprocessingParameters
-from app.schemas.exceptions import InvalidFileFormatError
 from app.util.csv_utils import read_csv, generate_headers
+from fastapi import UploadFile
 import pytest
+import io
 
 # ====================
 # Creating Dummy Input
 # ====================
 @pytest.fixture
-def raw_file():
+def raw_file() -> UploadFile:
     # Dummy raw file for testing
     content = b'\x01\x02\x03\x04' * 100
-    return ("dummy.raw", content, "application/octet-stream")
+    return UploadFile(
+        filename="dummy.raw",
+        file=io.BytesIO(content)
+    )
 
 @pytest.fixture
-def bin_file():
+def bin_file() -> UploadFile:
     # Dummy bin file for testing
     content = b'\x05\x06\x07\x08' * 100
-    return ("dummy.bin", content, "application/octet-stream")
+    return UploadFile(
+        filename="dummy.bin",
+        file=io.BytesIO(content)
+    )
 
 @pytest.fixture
-def hdr_file():
+def hdr_file() -> UploadFile:
     # Dummy hdr file for testing
-    content = b'ENVI\naqcuisition time = 2025-04-29T15:28:01,406332Z\nband names = {470nm, 600nm, 750nm, 900nm }\nbands=4\nfile type = ENVI Standard'
-    return ("dummy.hdr", content, "application/octet-stream")
+    hdr_content = (
+        b"ENVI\n"
+        b"description = {Dummy ENVI Header}\n"
+        b"samples = 10\n"
+        b"lines = 10\n"
+        b"bands = 4\n"
+        b"header offset = 0\n"
+        b"data type = 4\n"
+        b"interleave = bsq\n"
+        b"byte order = 0\n"
+        b"wavelengths = {470.0, 600.0, 750.0, 900.0}\n"
+        b"wavelength units = Nanometers\n"
+    )
+    return UploadFile(
+        filename="dummy.hdr",
+        file=io.BytesIO(hdr_content)
+    )
 
 @pytest.fixture
 def wrong_hdr_file():
