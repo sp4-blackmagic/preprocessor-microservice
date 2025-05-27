@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from fastapi.responses import FileResponse
 from typing import Optional
 from app.util.verification import verify_hdr_and_cube_input, VerificationResult
-from app.schemas.data_models import PreprocessingParameters
+from app.schemas.data_models import PreprocessingParameters, get_preprocessing_params
 from app.core.preprocessor import preprocess
 import pandas as pd
 import tempfile
@@ -14,21 +14,15 @@ router = APIRouter()
 # Add `response_model` if returning structured JSON
 @router.post("/preprocess")
 async def preprocess_data(
-    params_json: Optional[str] = Form(None), 
+    params: PreprocessingParameters = Depends(get_preprocessing_params), 
     hdr_file: Optional[UploadFile] = File(None), 
     cube_file: Optional[UploadFile] = File(None)
 ):
     """
     The main function hosting the logic to the actual preprocessing endpoint.
-    Takes in a header file and a binary of a data cube and processes it, 
-    by extracting data from each pixel for each wavelengt band using
-    - Statistical Features
-    - Average Spectrum
-    - Spectral Derivatives (Savitzky-Golay)
-    - Continuum Removal
-    - FFT Features
-    Returns the preprocessing results as a csv file or saves them
-    to the running instance of the storage microservice
+    Takes in a header file and a binary/raw of a data cube and calls the 
+    preprocess function on them, the results of which are later returned
+    in a .csv formatted text response
 
     Parameters
     ----------
@@ -39,17 +33,6 @@ async def preprocess_data(
     cubeFile: UploadFile
         The actual binary data of the data cube to be processed
     """
-
-    # Params validation
-    params: PreprocessingParameters = PreprocessingParameters()
-    if params_json is not None:
-        try:
-            params = PreprocessingParameters.model_validate_json(params_json)
-        except Exception as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid parameters for the request: {e}"
-            )
 
     # Basic file validation
     if not hdr_file and not cube_file:
