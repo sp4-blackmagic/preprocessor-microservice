@@ -112,13 +112,6 @@ def test_average_spectrum_wrong_dimensions():
         (
             np.array([0.8, np.nan, 0.6, 0.5, 0.6, np.nan, 0.8]),
             np.array([500, 510, 520, 530, 540, 550, 560]),
-            # For this test, it's tricky to predict exact interp. values without running.
-            # Best to run once and record. Based on local run for interpolation:
-            # Spectrum:      [0.8, NaN, 0.6, 0.5, 0.6, NaN, 0.8]
-            # Continuum:     [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
-            # Initial CR:    [1.0, NaN, 0.75, 0.625, 0.75, NaN, 1.0]
-            # Interpolated NaN at index 1: (1.0 + 0.75) / 2 = 0.875
-            # Interpolated NaN at index 5: (0.75 + 1.0) / 2 = 0.875
             np.array([1.0, 0.875, 0.75, 0.625, 0.75, 0.875, 1.0])
         ),
         # Test Case 6: Input spectrum size < 3 (should return all ones)
@@ -175,15 +168,15 @@ def test_average_spectrum_wrong_dimensions():
         )
     ],
     ids=[
-        "simple_absorption", # Failing
+        "simple_absorption",
         "rising_linear_spectrum",
         "flat_spectrum",
-        "wavelengths_descending_order", # Failing
+        "wavelengths_descending_order",
         "spectrum_with_nan_partial_interp", # Failing
         "len_lt_3_points",
         "mismatch_len_truncate_lt_3",
-        "mismatch_len_truncate_ge_3", # Failing
-        "duplicate_wavelengths", # Failing
+        "mismatch_len_truncate_ge_3",
+        "duplicate_wavelengths",
         "all_inf_values",
         "all_nan_values",
         "empty_spectrum"
@@ -207,4 +200,4 @@ def test_calculate_continuum_removal_logic(continuum_removal_test_data):
 
     # Use assert_allclose for floating-point comparisons
     np.testing.assert_allclose(result_cr_spectrum, expected_cr_spectrum, rtol=1e-5, atol=1e-8)
-    assert result_cr_spectrum.dtype == np.float64 # or whatever your function's output dtype is (often float64 for numpy operations)
+    assert result_cr_spectrum.dtype == np.float64 
