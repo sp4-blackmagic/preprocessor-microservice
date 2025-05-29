@@ -2,8 +2,7 @@ import io
 import csv
 import numpy as np
 import pandas as pd
-from typing import Set, List
-from app.schemas.data_models import ExtractionMethods, PreprocessingParameters
+from app.schemas.data_models import PreprocessingParameters
 
 def read_csv(csv_bytes: bytes, encoding: str):
     """

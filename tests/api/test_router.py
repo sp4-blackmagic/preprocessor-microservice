@@ -41,7 +41,7 @@ def hdr_file() -> UploadFile:
         b"data type = 4\n"
         b"interleave = bsq\n"
         b"byte order = 0\n"
-        b"wavelengths = {470.0, 600.0, 750.0, 900.0}\n"
+        b"wavelength = {470.0, 600.0, 750.0, 900.0}\n"
         b"wavelength units = Nanometers\n"
     )
     return UploadFile(
