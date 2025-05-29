@@ -29,9 +29,21 @@ just run
 ```
 
 ### Fetching data
-Explain here
+Once the service is started, preprocessing can be requested by making a **multipart/form-data** call to the endpoint :
+```bash
+# If running locally
+http://127.0.0.1:8001/preprocessor/api/preprocess
+# If running with docker
+http://0.0.0.0:8001/preprocessor/api/preprocess
+```
+This request will expect specific key-value pairs in the form:
+- `hdr_file` of type File, which accepts the header file of the hyperspectral image you wish to process
+- `cube_file` of type File, which accepts either a `.bin` or `.raw` extension file which contains the data to the corresponding header file
+- **optional**: params of type Text, where each parameter from `app/schemas/data_models.py/PreprocessingParameters` can be specified individually, so and example of such a pair would be `remove_background (type Text) - False`. \
+The parameters that are not specified in the request will assume default values
 
-*`app.main:app` means: in the `app/main.py` file, find the FastAPI instance named `app`.*
+The response will be raw text formatted like a `.csv` file.
+
 
 # Docker
 To run the service as a docker container follow the steps below
