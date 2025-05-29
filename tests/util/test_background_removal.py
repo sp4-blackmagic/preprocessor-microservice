@@ -108,6 +108,18 @@ import pytest
             np.zeros((5, 5, 0), dtype=np.float32),
             0.5,
             np.zeros((5, 5), dtype=bool)
+        ),
+        # Test Case 10: All values well below treshold, all should be considered as backgroud
+        (
+            np.array([
+                [0.01, 0.02],
+                [0.02, 0.03]
+            ], dtype=np.float32),
+            1.0,
+            np.array([
+                [False, False],
+                [False, False]
+            ], dtype=np.bool)
         )
     ],
     ids=[
@@ -119,7 +131,8 @@ import pytest
         "2D_all_same_nonzero",
         "2D_all_zeros",
         "3D_5bands_specific_band_selection",
-        "3D_0bands"
+        "3D_0bands",
+        "2D_all_background"
     ]
 )
 def background_removal_test_data(request):
