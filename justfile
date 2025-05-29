@@ -1,14 +1,10 @@
-# activate uv
-start-uv:
-  source .venv/bin/activate
-
 # linting
 lint:
   flake8 ./app ./tests
 
 # testing
 test: 
-  pytest
+  uv run pytest
 
 # run the service
 run:
