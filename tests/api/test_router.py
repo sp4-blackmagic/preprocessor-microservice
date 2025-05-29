@@ -1,5 +1,4 @@
 from app.schemas.data_models import PreprocessingParameters
-from app.util.csv_utils import read_csv, generate_headers
 from fastapi import UploadFile
 import numpy as np
 import pytest
@@ -89,12 +88,6 @@ def test_upload_and_preprocess_bin_success(client, hdr_file, bin_file):
     # Check general response
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-
-    # Check response format
-    # csv_reader = read_csv(response.content, "utf-8")
-    # csv_response_header = next(csv_reader)
-    # expected_headers = generate_headers(params.extraction_methods, params.bands, params.extra_features)
-    # assert csv_response_header == expected_headers
 
 def test_upload_and_preprocess_raw_success(client, hdr_file, raw_file):
     hdr_file.file.seek(0)
