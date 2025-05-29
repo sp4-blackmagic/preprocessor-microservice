@@ -8,7 +8,7 @@ source .venv/bin/activate
 
 ### Install all dependencies 
 ```bash
-uv pip install .
+uv sync
 ```
 
 ### Install just
@@ -23,11 +23,13 @@ If having problems, refer to https://github.com/casey/just
 ```bash
 uv uvicorn app.main:app --reload --port 8001
 ```
+or
+```bash
+just run
+```
 
 ### Fetching data
-For now this is a mock solution, so it returns an example csv with some hyperspectral data.
-While the service is running, make a POST request to the endpoint:
-```http://127.0.0.1:8001/preprocessor/api/preprocess```
+Explain here
 
 *`app.main:app` means: in the `app/main.py` file, find the FastAPI instance named `app`.*
 
@@ -38,4 +40,18 @@ To run the service as a docker container follow the steps below
 ```bash
 docker build -t preprocessor-service .   
 docker run -p 8001:8001 preprocessor-service
+```
+or
+```bash
+just run-docker
+```
+
+# Misc
+### Running tests
+```bash
+just test
+```
+### Linting
+```bash
+just lint
 ```
