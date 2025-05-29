@@ -23,56 +23,6 @@ def read_csv(csv_bytes: bytes, encoding: str):
     csv_reader = csv.reader(csv_file)
     return csv_reader
 
-def generate_headers(extraction_methods: Set[ExtractionMethods], bands: int, include_extras: bool):
-    """
-    Returns a list of strings meant to serve as headers for the spectral
-    data preprocessing response
-    
-    Parameters
-    ----------
-    extraction_methods: Set[ExtractionMethods]
-        A set of enum values describing which extraction methods
-        to include in the generated headers
-    bands: int
-        Number of bands for which to generate the headers
-    include_extras: bool
-        Boolean indicating whether the generated headers
-        should include additional fields that were created
-        during data exploration, which are:
-        - record_json_id
-        - original_file_ref
-        - fruit
-        - day
-        - side
-        - camera_type
-        - ripeness_state
-        - firmness
-        - int_weight
-        - storage_days
-        Most if not all of these fields will be set to null
-    """
-    headers: List[str] = []
-
-    if include_extras:
-        headers.append("record_json_id")
-        headers.append("original_file_ref")
-        headers.append("fruit")
-        headers.append("day")
-        headers.append("side")
-        headers.append("camera_type")
-        headers.append("ripeness_state")
-        headers.append("ripeness_state_fine")
-        headers.append("firmness")
-        headers.append("init_weight")
-        headers.append("storage_days")
-
-    for method in extraction_methods:
-        for i in range(0, bands):
-            header = method.value + "_b" + str(i)
-            headers.append(header)
-
-    return headers
-
 def create_feature_row(features_dict: dict, params: PreprocessingParameters):
     """
     Creates a single row (1D NumPy array) of features and corresponding column names
@@ -90,12 +40,16 @@ def create_feature_row(features_dict: dict, params: PreprocessingParameters):
         pd.DataFrame: A DataFrame with a single row containing all concatenated features.
     """
 
+    # Sanity check
+    for key, value in features_dict.items():
+        if len(value) != params.target_bands:
+            raise ValueError(f"Feature '{key.value}' array length {len(value)} does not match target_bands {params.target_bands}")
+
     feature_values_list = []
     column_names = []
 
-    # 1. Handle Extra Features (Metadata)
+    # Handle Extra Features (Metadata)
     if params.extra_features:
-        # Define the names for the extra features
         extra_feature_names = [
             "record_json_id",
             "original_file_ref",
@@ -123,7 +77,6 @@ def create_feature_row(features_dict: dict, params: PreprocessingParameters):
 
     data_row = np.array(feature_values_list, dtype=np.float32).reshape(1, -1)
 
-    # 5. Create the Pandas DataFrame
     df = pd.DataFrame(data_row, columns=column_names)
 
     return df
