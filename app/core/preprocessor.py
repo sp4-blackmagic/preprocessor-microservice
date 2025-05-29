@@ -50,7 +50,7 @@ async def preprocess(
             img: SpyFile | SpectralLibrary = envi.open(temp_hdr_path, temp_cube_path)
             img_data: ndarray = img.load().astype(np.float32)
             print(f"The parsed image has {img.nrows} rows, {img.ncols} columns, and {img.nbands} bands")
-            print(f"The image takes up approximately {np.round(4 * img.nrows * img.ncols * img.nbands / 1024 / 1024 * 1000) / 100} MB of memory")
+            print(f"The image takes up approximately {np.round(4 * img.nrows * img.ncols * img.nbands / 1024 / 1024 * 1000) / 1000} MB of memory")
 
             # ===============
             # File Resampling
@@ -58,10 +58,6 @@ async def preprocess(
 
             # Get the original wavelength values for later resampling
             original_wavelengths = None
-            print("=== wavelengths ===")
-            print(img.bands.band_unit)
-            if(hasattr(img, "spectra")): print(img.spectra)
-            else: print("no spectra")
             if hasattr(img, "metadata") and "wavelength" in img.metadata and img.metadata["wavelength"]: 
                 try:
                     # Ensure the wavelengths are loaded in as float values
