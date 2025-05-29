@@ -54,7 +54,7 @@ def hdr_file() -> UploadFile:
         b"data type = 4\n"
         b"interleave = bsq\n"
         b"byte order = 0\n"
-        b"wavelengths = {470.0, 600.0, 750.0, 900.0}\n"
+        b"wavelength = {470.0, 600.0, 750.0, 900.0}\n"
         b"wavelength units = Nanometers\n"
     )
     return UploadFile(
@@ -82,6 +82,10 @@ def test_invalid_header_file(wrong_hdr_file, bin_file):
     with pytest.raises(InvalidFileFormatError, match="The provided hdr file is invalid - no attribute 'filename'"):
         result = basic_file_validation(hdr_file=wrong_hdr_file, cube_file=bin_file)
 
-def test_invalid_cube_file(hdr_file, wrong_bin_file):
+def test_invalid_cube_file_bin(hdr_file, wrong_bin_file):
     with pytest.raises(InvalidFileFormatError, match="The provided cube file is invalid - no attribute 'filename'"):
         result = basic_file_validation(hdr_file=hdr_file, cube_file=wrong_bin_file)
+
+def test_invalid_cube_file_raw(hdr_file, wrong_raw_file):
+    with pytest.raises(InvalidFileFormatError, match="The provided cube file is invalid - no attribute 'filename'"):
+        result = basic_file_validation(hdr_file=hdr_file, cube_file=wrong_raw_file)
