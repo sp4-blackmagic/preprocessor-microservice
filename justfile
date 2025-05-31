@@ -12,7 +12,7 @@ test:
 
 # run the service
 run:
-  uvicorn app.main:app --reload --port 8001
+  uv run uvicorn app.main:app --reload --port 8001
 
 # build a docker container
 build-docker:

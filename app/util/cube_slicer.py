@@ -10,7 +10,7 @@ base_path = Path(__file__).resolve().parent
 
 YOLO_SIDE_LENGTH = 512
 print("loading yolo model")
-model = YOLO(base_path / "model/best.pt")
+model = YOLO(base_path / "model/best_small.pt")
 
 def extract_shape(original_data: ndarray, box: list[int], mask: ndarray):
     (rows, cols, bands) = original_data.shape
