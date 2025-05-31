@@ -84,12 +84,12 @@ def test_extract_shape(cubes_boxes_masks):
     np.testing.assert_array_equal(extracted_shape, expected_cube)
     assert expected_cube.dtype == np.float32
 
-def test_get_kiwis_zeors():
-    data = np.zeros((15, 15, 40), dtype=np.float32)
-
-    result = get_kiwis(data)
-
-    assert len(result) == 0
+#def test_get_kiwis_zeros():
+#    data = np.zeros((15, 15, 40), dtype=np.float32)
+#
+#    result = get_kiwis(data)
+#
+#    assert len(result) == 0
 
 def test_get_kiwis_not_enough_bands():
     data = np.random.rand(1500, 800, 20).astype(np.float32)

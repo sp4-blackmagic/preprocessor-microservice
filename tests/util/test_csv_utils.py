@@ -50,7 +50,7 @@ def test_create_feature_row_no_extras_single_feature():
     features_dict = {ExtractionMethods.AVG_SPECTRUM: np.array([0.1, 0.2, 0.3])}
     params = PreprocessingParameters(extra_features=False, target_bands=3)
     
-    df = create_feature_row(features_dict, params)
+    df = create_feature_row([features_dict], params)
     
     expected_columns = [
         f"{ExtractionMethods.AVG_SPECTRUM.value}_b0",
@@ -61,6 +61,41 @@ def test_create_feature_row_no_extras_single_feature():
     
     pd.testing.assert_frame_equal(df, pd.DataFrame(expected_data, columns=expected_columns))
     assert df.dtypes.iloc[0] == np.float32
+
+def test_create_multiple_feature_rows():
+    """Test creating a feature row from multiple samples with no extra features, two extraction methods."""
+    features_dict_array = [
+        {
+            ExtractionMethods.AVG_SPECTRUM: np.array([0.1, 0.2, 0.3]),
+            ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM: np.array([0.01, -0.01, 0.04])
+        },
+        {
+            ExtractionMethods.AVG_SPECTRUM: np.array([0.1, 0.2, 0.1]),
+            ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM: np.array([0.01, -0.01, 0.01])
+        }
+    ]
+    params = PreprocessingParameters(extra_features=False, target_bands=3)
+    
+    df = create_feature_row(features_dict_array, params)
+    
+    expected_columns = [
+        f"{ExtractionMethods.AVG_SPECTRUM.value}_b0",
+        f"{ExtractionMethods.AVG_SPECTRUM.value}_b1",
+        f"{ExtractionMethods.AVG_SPECTRUM.value}_b2",
+        f"{ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM.value}_b0",
+        f"{ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM.value}_b1",
+        f"{ExtractionMethods.FIRST_DERIV_AVG_SPECTRUM.value}_b2"
+    ]
+    expected_data = np.array([
+        [0.1, 0.2, 0.3, 0.01, -0.01, 0.04],
+        [0.1, 0.2, 0.1, 0.01, -0.01, 0.01]
+    ], dtype=np.float32)
+    
+    print(df)
+    pd.testing.assert_frame_equal(df, pd.DataFrame(expected_data, columns=expected_columns))
+    assert df.dtypes.iloc[0] == np.float32
+
+
 
 def test_create_feature_row_with_extras_multiple_features():
     """Test creating a feature row with extra features and multiple spectral features."""
@@ -73,7 +108,7 @@ def test_create_feature_row_with_extras_multiple_features():
     # Sort dictionary items by enum value for consistent order
     sorted_features_dict = dict(sorted(features_dict.items(), key=lambda item: item[0].value))
 
-    df = create_feature_row(sorted_features_dict, params)
+    df = create_feature_row([sorted_features_dict], params)
 
     expected_extra_cols = [
         "record_json_id", "original_file_ref", "fruit", "day", "side", 
@@ -99,7 +134,7 @@ def test_create_feature_row_empty_spectral_features():
     features_dict = {}
     params = PreprocessingParameters(extra_features=True, target_bands=5) # Bands should be ignored
     
-    df = create_feature_row(features_dict, params)
+    df = create_feature_row([features_dict], params)
     
     expected_extra_cols = [
         "record_json_id", "original_file_ref", "fruit", "day", "side", 
@@ -117,14 +152,14 @@ def test_create_feature_row_mismatched_band_length():
     params = PreprocessingParameters(extra_features=False, target_bands=2) # Expecting 2 bands, got 3
     
     with pytest.raises(ValueError, match="Feature 'avg_spectrum' array length .* does not match target_bands .*"):
-        create_feature_row(features_dict, params)
+        create_feature_row([features_dict], params)
 
 def test_create_feature_row_zero_bands():
     """Test creating a feature row with zero bands."""
     features_dict = {ExtractionMethods.AVG_SPECTRUM: np.array([])}
     params = PreprocessingParameters(extra_features=False, target_bands=0)
     
-    df = create_feature_row(features_dict, params)
+    df = create_feature_row([features_dict], params)
     
     expected_columns = []
     expected_data = np.array([[]], dtype=np.float32) # Empty 2D array
