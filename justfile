@@ -8,7 +8,7 @@ lint:
 
 # testing
 test: 
-  pytest
+  uv run pytest
 
 # run the service
 run:

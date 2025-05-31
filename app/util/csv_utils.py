@@ -22,7 +22,7 @@ def read_csv(csv_bytes: bytes, encoding: str):
     csv_reader = csv.reader(csv_file)
     return csv_reader
 
-def create_feature_row(features_dict_array: [dict], params: PreprocessingParameters):
+def create_feature_row(features_dict_array: list[dict], params: PreprocessingParameters):
     """
     Creates a single row (1D NumPy array) of features and corresponding column names
     by horizontally concatenating extra features and extracted spectral features.

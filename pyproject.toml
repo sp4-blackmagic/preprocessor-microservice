@@ -1,6 +1,6 @@
 [project]
 name = "preprocessor-service"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
@@ -9,12 +9,16 @@ dependencies = [
     "spectral>=0.24",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
+    "pytest-cov>=6.1.1",
     "pandas>=2.2.3",
     "httpx>=0.28.1",
     "flake8>=7.2.0",
     "scipy>=1.15.3",
-    "ultralytics>=8.3.145" 
+    "ultralytics>=8.3.145",
+    "coverage>=7.8.2"
 ]
+
+requires-python = ">=3.13"
 
 [tool.pytest.ini_options]
 python_files = "test_*.py *_test.py"
