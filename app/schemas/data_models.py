@@ -19,6 +19,7 @@ class PreprocessingParameters(BaseModel):
         ExtractionMethods.SNV_AVG_SPECTRUM,
         ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM
     ]))
+    multiple_samples: bool = False
     remove_background: bool = False
     background_treshold: float = 0.1
     extra_features: bool = False # Whether to include the features like "original_file_ref" and so on, look for extracted_features_VIS_test_unbalanced for the idea
@@ -34,6 +35,7 @@ async def get_preprocessing_params(
     # Each field from the Pydantic model now becomes a Form() parameter
     # with its default and type hints directly from the Pydantic model..
     extraction_methods: Optional[str] = Form(None), # JSON string for list
+    multiple_samples: bool = Form(PreprocessingParameters.model_fields['multiple_samples'].default),
     remove_background: bool = Form(PreprocessingParameters.model_fields['remove_background'].default),
     background_treshold: float = Form(PreprocessingParameters.model_fields['background_treshold'].default),
     extra_features: bool = Form(PreprocessingParameters.model_fields['extra_features'].default),
@@ -57,6 +59,7 @@ async def get_preprocessing_params(
 
     # Construct the Pydantic model instance
     params_data = {
+        "multiple_samples": multiple_samples,
         "remove_background": remove_background,
         "background_treshold": background_treshold,
         "extra_features": extra_features,

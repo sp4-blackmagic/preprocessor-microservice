@@ -14,6 +14,7 @@ dependencies = [
     "httpx>=0.28.1",
     "flake8>=7.2.0",
     "scipy>=1.15.3",
+    "ultralytics>=8.3.145",
     "coverage>=7.8.2"
 ]
 
