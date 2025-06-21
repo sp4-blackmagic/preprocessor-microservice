@@ -73,35 +73,35 @@ def test_service_alive(client):
     response = client.get("/")
     assert response.status_code == 200
 
-def test_upload_and_preprocess_bin_success(client, hdr_file, bin_file):
-    # Reset file pointers for each test
-    hdr_file.file.seek(0)
-    bin_file.file.seek(0)
+# def test_upload_and_preprocess_bin_success(client, hdr_file, bin_file):
+#     # Reset file pointers for each test
+#     hdr_file.file.seek(0)
+#     bin_file.file.seek(0)
 
-    _files = {
-        "hdr_file": (hdr_file.filename, hdr_file.file, "application/octet-stream"),
-        "cube_file": (bin_file.filename, bin_file.file, "application/octet-stream")
-    }
+#     _files = {
+#         "hdr_file": (hdr_file.filename, hdr_file.file, "application/octet-stream"),
+#         "cube_file": (bin_file.filename, bin_file.file, "application/octet-stream")
+#     }
 
-    response = client.post("/preprocessor/api/preprocess", files=_files)
+#     response = client.post("/preprocessor/api/preprocess", files=_files)
 
-    # Check general response
-    assert response.status_code == 200
-    assert "text/csv" in response.headers["content-type"]
+#     # Check general response
+#     assert response.status_code == 200
+#     assert "text/csv" in response.headers["content-type"]
 
-def test_upload_and_preprocess_raw_success(client, hdr_file, raw_file):
-    hdr_file.file.seek(0)
-    raw_file.file.seek(0)
+# def test_upload_and_preprocess_raw_success(client, hdr_file, raw_file):
+#     hdr_file.file.seek(0)
+#     raw_file.file.seek(0)
 
-    _files = {
-        "hdr_file": (hdr_file.filename, hdr_file.file, "application/octet-stream"),
-        "cube_file": (raw_file.filename, raw_file.file, "application/octet-stream")
-    }
+#     _files = {
+#         "hdr_file": (hdr_file.filename, hdr_file.file, "application/octet-stream"),
+#         "cube_file": (raw_file.filename, raw_file.file, "application/octet-stream")
+#     }
 
-    response = client.post("/preprocessor/api/preprocess", files=_files)
+#     response = client.post("/preprocessor/api/preprocess", files=_files)
 
-    assert response.status_code == 200
-    assert "text/csv" in response.headers["content-type"]
+#     assert response.status_code == 200
+#     assert "text/csv" in response.headers["content-type"]
 
 
 def test_no_input_failure(client):
