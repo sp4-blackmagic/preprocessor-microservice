@@ -19,6 +19,7 @@ class PreprocessingParameters(BaseModel):
         ExtractionMethods.SNV_AVG_SPECTRUM,
         ExtractionMethods.FIRST_DERIV_CONTINUUM_REMOVED_AVG_SPECTRUM
     ]))
+    storage_endpoint: str = ""
     multiple_samples: bool = False
     remove_background: bool = False
     background_treshold: float = 0.1
@@ -44,7 +45,8 @@ async def get_preprocessing_params(
     min_wavelength: int = Form(PreprocessingParameters.model_fields['min_wavelength'].default),
     max_wavelength: int = Form(PreprocessingParameters.model_fields['max_wavelength'].default),
     sg_window_deriv: int = Form(PreprocessingParameters.model_fields['sg_window_deriv'].default),
-    sg_polyorder_deriv: int = Form(PreprocessingParameters.model_fields['sg_polyorder_deriv'].default)
+    sg_polyorder_deriv: int = Form(PreprocessingParameters.model_fields['sg_polyorder_deriv'].default),
+    storage_endpoint: str = Form(PreprocessingParameters.model_fields['storage_endpoint'].default)
 ) -> PreprocessingParameters:
     # Manually parse the extraction_methods if it's a JSON string
     parsed_extraction_methods = None
@@ -68,7 +70,8 @@ async def get_preprocessing_params(
         "min_wavelength": min_wavelength,
         "max_wavelength": max_wavelength,
         "sg_window_deriv": sg_window_deriv,
-        "sg_polyorder_deriv": sg_polyorder_deriv
+        "sg_polyorder_deriv": sg_polyorder_deriv,
+        "storage_endpoint": storage_endpoint
     }
     if parsed_extraction_methods is not None:
         params_data["extraction_methods"] = parsed_extraction_methods

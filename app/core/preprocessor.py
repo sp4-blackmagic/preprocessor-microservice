@@ -65,10 +65,6 @@ async def preprocess(
 
                 # Get the original wavelength values for later resampling
                 original_wavelengths = None
-                print("=== wavelengths ===")
-                print(img.bands.band_unit)
-                if(hasattr(img, "spectra")): print(img.spectra)
-                else: print("no spectra")
                 if hasattr(img, "metadata") and "wavelength" in img.metadata and img.metadata["wavelength"]: 
                     try:
                         # Ensure the wavelengths are loaded in as float values
